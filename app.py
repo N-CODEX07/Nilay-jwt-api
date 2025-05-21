@@ -18,7 +18,7 @@ def get_token():
     
     if not uid or not password:
         logger.error("Missing uid or password in request")
-        return jsonify({"error": "Missing uid or password"}), 400
+        return jsonify({"error": "error"}), 400
     
     try:
         target_url = f"{TARGET_API}?uid={uid}&password={password}"
@@ -27,37 +27,31 @@ def get_token():
         response = requests.get(target_url, timeout=10)
         response.raise_for_status()
         
-        logger.info("Successfully fetched response from target API")
-        return jsonify(response.json()), 200
+        # Check if response is valid JSON
+        try:
+            target_response = response.json()
+        except ValueError:
+            logger.error("Target API returned invalid JSON")
+            return jsonify({"error": "error"}), 502
         
-    except requests.exceptions.HTTPError as http_err:
-        logger.error(f"HTTP error occurred: {http_err}")
-        return jsonify({
-            "error": "Failed to fetch token from target API",
-            "status_code": response.status_code,
-            "details": str(http_err)
-        }), response.status_code
+        # Extract only the token from the response
+        token = target_response.get('token')
+        if not token:
+            logger.error("Token not found in target API response")
+            return jsonify({"error": "error"}), 502
         
-    except requests.exceptions.Timeout:
-        logger.error("Request to target API timed out")
-        return jsonify({
-            "error": "Request to target API timed out",
-            "details": "The target API took too long to respond"
-        }), 504
+        # Return only the token
+        logger.info("Successfully fetched token from target API")
+        return jsonify({"token": token}), 200
         
-    except requests.exceptions.ConnectionError:
-        logger.error("Failed to connect to target API")
-        return jsonify({
-            "error": "Failed to connect to target API",
-            "details": "Could not establish a connection to the target API"
-        }), 502
-        
-    except requests.exceptions.RequestException as req_err:
-        logger.error(f"Request error occurred: {req_err}")
-        return jsonify({
-            "error": "An error occurred while fetching the token",
-            "details": str(req_err)
-        }), 500
+    except (requests.exceptions.HTTPError, requests.exceptions.Timeout, 
+            requests.exceptions.ConnectionError, requests.exceptions.RequestException):
+        logger.error("Error fetching token from target API")
+        return jsonify({"error": "error"}), 500
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "ok", "message": "Server is running"}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)

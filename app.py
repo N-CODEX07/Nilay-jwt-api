@@ -4,16 +4,12 @@ import logging
 
 app = Flask(__name__)
 
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Define the target API endpoint
 TARGET_API = "https://akiru-jwt-10.vercel.app/token"
-
-CREDITS = {
-    "api_source_credit": "@NR_CODRX",
-    "api_credit": "@NILAY_VII",
-    "telegram_channel": "@nr_codex"
-}
 
 @app.route('/token', methods=['GET'])
 def get_token():
@@ -31,15 +27,8 @@ def get_token():
         response = requests.get(target_url, timeout=10)
         response.raise_for_status()
         
-        target_response = response.json()
-        
-        response_with_credits = {
-            **target_response,
-            "credits": CREDITS
-        }
-        
         logger.info("Successfully fetched response from target API")
-        return jsonify(response_with_credits), 200
+        return jsonify(response.json()), 200
         
     except requests.exceptions.HTTPError as http_err:
         logger.error(f"HTTP error occurred: {http_err}")
@@ -69,10 +58,6 @@ def get_token():
             "error": "An error occurred while fetching the token",
             "details": str(req_err)
         }), 500
-
-@app.route('/health', methods=['GET'])
-def health_check():
-    return jsonify({"status": "ok", "message": "Server is running"}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)

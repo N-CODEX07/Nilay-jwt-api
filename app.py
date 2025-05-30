@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Define the target API endpoint
-TARGET_API = "https://nilay-jwt-ob49.vercel.app/token"
+TARGET_API = "https://jwt-aditya.vercel.app/token"
 
 @app.route('/token', methods=['GET'])
 def get_token():

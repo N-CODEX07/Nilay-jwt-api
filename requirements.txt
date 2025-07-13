@@ -1,4 +1,6 @@
 Flask
+flask-caching
 requests
 pycryptodome
-protobuf_decoder
+protobuf
+colorama
